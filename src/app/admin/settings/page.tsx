@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, Save, Loader2, Globe, Shield, PhoneCall, AlignLeft } from 'lucide-react';
 import ImageUploadInput from '@/components/ImageUploadInput';
+import FileUploadInput from '@/components/FileUploadInput';
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<'general' | 'about' | 'contact' | 'seo'>('general');
@@ -15,6 +16,7 @@ export default function AdminSettingsPage() {
     siteName: '',
     logo: '',
     tagline: '',
+    brochureUrl: '',
     hero: { title: '', subtitle: '', bgImage: '', ctaText: '' },
     about: { story: '', mission: '', vision: '', image: '' },
     contact: { whatsappNumber: '', phone: '', email: '', address: '', hours: '' },
@@ -186,7 +188,7 @@ export default function AdminSettingsPage() {
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-gray-900 border-b border-gray-50 pb-2">
               Branding
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Site Name</label>
                 <input
@@ -213,6 +215,14 @@ export default function AdminSettingsPage() {
                   value={formData.logo}
                   onChange={(url) => setFormData({ ...formData, logo: url })}
                   placeholder="Logo image URL"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Brochure PDF / File</label>
+                <FileUploadInput
+                  value={formData.brochureUrl || ''}
+                  onChange={(url) => setFormData({ ...formData, brochureUrl: url })}
+                  placeholder="Upload product catalog/brochure PDF"
                 />
               </div>
             </div>

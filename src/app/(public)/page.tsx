@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Shield, ShieldCheck, Award, Users, ArrowRight, MessageSquare, Wrench } from 'lucide-react';
+import { Shield, ShieldCheck, Award, Users, ArrowRight, MessageSquare, Wrench, FileText } from 'lucide-react';
 import dbConnect from '@/lib/dbConnect';
 import { Category } from '@/models/Category';
 import { Product } from '@/models/Product';
@@ -18,27 +18,35 @@ export default async function HomePage() {
   const defaultWhatsapp = settings?.contact?.whatsappNumber || '9219595948';
 
   // Fetch active categories (limit to 8)
-  const categories = await Category.find({ isActive: true })
-    .sort({ sortOrder: 1 })
-    .limit(8)
-    .lean();
+  const categories = JSON.parse(JSON.stringify(
+    await Category.find({ isActive: true })
+      .sort({ sortOrder: 1 })
+      .limit(8)
+      .lean()
+  ));
 
   // Fetch featured products
-  const featuredProducts = await Product.find({ isActive: true, isFeatured: true })
-    .populate('category', 'name slug')
-    .limit(4)
-    .lean();
+  const featuredProducts = JSON.parse(JSON.stringify(
+    await Product.find({ isActive: true, isFeatured: true })
+      .populate('category', 'name slug')
+      .limit(4)
+      .lean()
+  ));
 
   // Fetch bestseller products
-  const bestsellerProducts = await Product.find({ isActive: true, isBestseller: true })
-    .populate('category', 'name slug')
-    .limit(4)
-    .lean();
+  const bestsellerProducts = JSON.parse(JSON.stringify(
+    await Product.find({ isActive: true, isBestseller: true })
+      .populate('category', 'name slug')
+      .limit(4)
+      .lean()
+  ));
 
   // Fetch featured reviews
-  const reviews = await Review.find({ isPublished: true, isFeatured: true })
-    .limit(3)
-    .lean();
+  const reviews = JSON.parse(JSON.stringify(
+    await Review.find({ isPublished: true, isFeatured: true })
+      .limit(3)
+      .lean()
+  ));
 
   const formattedWhatsapp = defaultWhatsapp.replace(/[^0-9]/g, '');
   const generalCtaMessage = `Hi ${siteName}, I would like to consult with a security expert regarding bulk locks orders. Please share details.`;
@@ -69,15 +77,26 @@ export default async function HomePage() {
                   {settings?.hero?.ctaText || 'Explore Products'}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <a
+                {settings?.brochureUrl && (
+                  <a
+                    href={settings.brochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/20 backdrop-blur-sm px-8 py-4 text-sm font-bold text-white hover:bg-white/10 transition-all hover:scale-102"
+                  >
+                    <FileText className="h-4 w-4 text-brand-bronze" />
+                    View Brochure
+                  </a>
+                )}
+                {/* <a
                   href={generalWhatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/20 backdrop-blur-sm px-8 py-4 text-sm font-bold text-white hover:bg-white/10 transition-all"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/20 backdrop-blur-sm px-8 py-4 text-sm font-bold text-white hover:bg-white/10 transition-all hover:scale-102"
                 >
                   <MessageSquare className="h-4 w-4 fill-current text-emerald-450" />
                   Consult on WhatsApp
-                </a>
+                </a> */}
               </div>
             </div>
             <div className="lg:col-span-5 relative hidden lg:block aspect-square w-full">
@@ -87,6 +106,7 @@ export default async function HomePage() {
                     src={settings?.hero?.bgImage || 'https://images.unsplash.com/photo-1510519138101-570d1dca3d66?w=600&auto=format&fit=crop&q=80'}
                     alt="Nayyars Locks Banner"
                     fill
+                    sizes="(max-width: 1024px) 100vw, 500px"
                     className="object-cover mix-blend-luminosity opacity-85 group-hover:scale-102 transition-transform duration-700"
                     priority
                   />

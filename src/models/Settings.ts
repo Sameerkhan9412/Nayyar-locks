@@ -5,6 +5,7 @@ export interface ISettings {
   siteName: string;
   logo: string;
   tagline: string;
+  brochureUrl?: string;
   hero: {
     title: string;
     subtitle: string;
@@ -48,6 +49,7 @@ const SettingsSchema = new Schema<ISettings>(
     siteName: { type: String, default: 'Nayyarslocks' },
     logo: { type: String, default: '' },
     tagline: { type: String, default: 'Premium Locking Systems & Security Solutions' },
+    brochureUrl: { type: String, default: '' },
     hero: {
       title: { type: String, default: 'Uncompromised Security, Premium Craftsmanship' },
       subtitle: { type: String, default: 'Discover our advanced range of padlocks, smart locks, and security hardware built to protect what matters most.' },

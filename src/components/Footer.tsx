@@ -23,9 +23,10 @@ interface FooterProps {
     copyright: string;
     aboutText: string;
   };
+  brochureUrl?: string;
 }
 
-export default function Footer({ siteName, logo, contact, socialLinks, footer }: FooterProps) {
+export default function Footer({ siteName, logo, contact, socialLinks, footer, brochureUrl }: FooterProps) {
   return (
     <footer className="border-t border-gray-150 bg-gray-950 text-gray-300">
       {/* Top Footer Section */}
@@ -100,6 +101,18 @@ export default function Footer({ siteName, logo, contact, socialLinks, footer }:
               <li>
                 <Link href="/contact" className="hover:text-white transition-colors">Contact Us</Link>
               </li>
+              {brochureUrl && (
+                <li>
+                  <a
+                    href={brochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-white transition-colors text-brand-bronze font-semibold"
+                  >
+                    Download Brochure
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
 

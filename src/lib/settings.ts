@@ -10,6 +10,7 @@ export async function getSiteSettings() {
         siteName: 'Nayyarslocks',
         logo: '',
         tagline: 'Premium Security Locking Systems & Solutions',
+        brochureUrl: 'https://drive.google.com/file/d/1nVE7cyiYMmDhZIAcEi_3TQlJ36FKhRUc',
         hero: {
           title: 'Uncompromised Security, Premium Craftsmanship',
           subtitle: 'Discover our advanced range of padlocks, smart biometric locks, mechanical deadbolts, and security hardware engineered to safeguard your world.',
@@ -46,7 +47,11 @@ export async function getSiteSettings() {
         },
       };
     }
-    return JSON.parse(JSON.stringify(settings));
+    const settingsObj = JSON.parse(JSON.stringify(settings));
+    if (!settingsObj.brochureUrl) {
+      settingsObj.brochureUrl = 'https://drive.google.com/file/d/1nVE7cyiYMmDhZIAcEi_3TQlJ36FKhRUc';
+    }
+    return settingsObj;
   } catch (error) {
     console.error('Error fetching settings from database:', error);
     return null;

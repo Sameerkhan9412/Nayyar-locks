@@ -9,9 +9,10 @@ import SearchBar from './SearchBar';
 interface NavbarProps {
   siteName: string;
   logo?: string;
+  brochureUrl?: string;
 }
 
-export default function Navbar({ siteName, logo }: NavbarProps) {
+export default function Navbar({ siteName, logo, brochureUrl }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -54,6 +55,16 @@ export default function Navbar({ siteName, logo }: NavbarProps) {
           <Link href="/contact" className="transition-colors hover:text-brand-bronze">
             Contact
           </Link>
+          {brochureUrl && (
+            <a
+              href={brochureUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-brand-bronze"
+            >
+              Brochure
+            </a>
+          )}
         </nav>
 
         {/* Search Bar - Desktop */}
@@ -127,6 +138,17 @@ export default function Navbar({ siteName, logo }: NavbarProps) {
             >
               Contact
             </Link>
+            {brochureUrl && (
+              <a
+                href={brochureUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsOpen(false)}
+                className="rounded-xl px-3 py-2 text-brand-bronze hover:bg-brand-bronze/5 transition-colors font-bold"
+              >
+                Brochure
+              </a>
+            )}
             <Link
               href="/admin"
               onClick={() => setIsOpen(false)}
