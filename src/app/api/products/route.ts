@@ -1,0 +1,153 @@
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/dbConnect';
+import { Product } from '@/models/Product';
+import { isAdminAuthenticated } from '@/lib/auth';
+
+// GET: Fetch products (Public/Admin, support listing all)
+export async function GET(request: Request) {
+  try {
+    await dbConnect();
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category') || '';
+    const adminFetch = searchParams.get('admin') === 'true';
+
+    const query: any = {};
+    if (!adminFetch) {
+      query.isActive = true;
+    }
+    if (category) {
+      query.category = category;
+    }
+
+    const products = await Product.find(query)
+      .populate('category', 'name slug')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return NextResponse.json({ success: true, products });
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json(
+      { success: false, error: errMessage },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Add new product (Admin only)
+export async function POST(request: Request) {
+  try {
+    const authenticated = await isAdminAuthenticated();
+    if (!authenticated) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      name,
+      slug,
+      description,
+      shortDescription,
+      category,
+      images,
+      SKU,
+      brand,
+      price,
+      originalPrice,
+      material,
+      keyType,
+      securityGrade,
+      features,
+      specifications,
+      tags,
+      isActive,
+      isFeatured,
+      isBestseller,
+      isNewArrival,
+      whatsappOverride,
+    } = body;
+
+    // Validation
+    if (
+      !name ||
+      !slug ||
+      !description ||
+      !shortDescription ||
+      !category ||
+      !images ||
+      images.length === 0 ||
+      !SKU ||
+      !brand ||
+      price === undefined ||
+      originalPrice === undefined ||
+      !material ||
+      !keyType ||
+      !securityGrade
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'Please provide all required fields' },
+        { status: 400 }
+      );
+    }
+
+    await dbConnect();
+
+    // Check unique slug and SKU
+    const existingSlug = await Product.findOne({ slug });
+    if (existingSlug) {
+      return NextResponse.json(
+        { success: false, error: 'A product with this URL slug already exists' },
+        { status: 400 }
+      );
+    }
+
+    const existingSKU = await Product.findOne({ SKU });
+    if (existingSKU) {
+      return NextResponse.json(
+        { success: false, error: 'A product with this SKU already exists' },
+        { status: 400 }
+      );
+    }
+
+    const newProduct = new Product({
+      name,
+      slug: slug.toLowerCase().replace(/[^a-z0-9-_]/g, '-'),
+      description,
+      shortDescription,
+      category,
+      images,
+      SKU,
+      brand,
+      price: Number(price),
+      originalPrice: Number(originalPrice),
+      material,
+      keyType,
+      securityGrade,
+      features: features || [],
+      specifications: specifications || {},
+      tags: tags || [],
+      isActive: isActive !== undefined ? isActive : true,
+      isFeatured: isFeatured !== undefined ? isFeatured : false,
+      isBestseller: isBestseller !== undefined ? isBestseller : false,
+      isNewArrival: isNewArrival !== undefined ? isNewArrival : false,
+      whatsappOverride: whatsappOverride || undefined,
+    });
+
+    await newProduct.save();
+
+    return NextResponse.json({
+      success: true,
+      message: 'Product created successfully',
+      product: newProduct,
+    });
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json(
+      { success: false, error: errMessage },
+      { status: 500 }
+    );
+  }
+}
