@@ -32,11 +32,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, slug, image, description, sortOrder, isActive } = body;
+    const { name, slug, image, description, sortOrder, isActive, parent } = body;
 
-    if (!name || !slug || !image || !description) {
+    if (!name || !slug) {
       return NextResponse.json(
-        { success: false, error: 'Please provide all required fields' },
+        { success: false, error: 'Please provide name and slug' },
         { status: 400 }
       );
     }
@@ -55,8 +55,9 @@ export async function POST(request: Request) {
     const newCategory = new Category({
       name,
       slug: slug.toLowerCase().replace(/[^a-z0-9-_]/g, '-'),
-      image,
-      description,
+      image: image || '',
+      description: description || '',
+      parent: parent || null,
       sortOrder: Number(sortOrder) || 0,
       isActive: isActive !== undefined ? isActive : true,
     });

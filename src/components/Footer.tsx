@@ -36,7 +36,7 @@ export default function Footer({ siteName, logo, contact, socialLinks, footer, b
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center self-start hover:opacity-95 transition-opacity">
               {logo ? (
-                <div className="relative h-10 w-32">
+                <div className="relative h-15 w-40">
                   <Image
                     src={logo}
                     alt={siteName}

@@ -21,7 +21,7 @@ export default function Navbar({ siteName, logo, brochureUrl }: NavbarProps) {
         {/* Brand Logo */}
         <Link href="/" className="flex items-center flex-shrink-0 hover:opacity-95 transition-opacity">
           {logo ? (
-            <div className="relative h-10 w-32 rounded-md">
+            <div className="relative h-14 w-34 rounded-md">
               <Image
                 src={logo}
                 alt={siteName}

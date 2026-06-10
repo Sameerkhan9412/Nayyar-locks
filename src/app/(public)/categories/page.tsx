@@ -9,7 +9,10 @@ export const revalidate = 60;
 
 export default async function CategoriesPage() {
   await dbConnect();
-  const categories = await Category.find({ isActive: true })
+  const categories = await Category.find({
+    isActive: true,
+    $or: [{ parent: null }, { parent: { $exists: false } }],
+  })
     .sort({ sortOrder: 1 })
     .lean();
 
@@ -37,7 +40,7 @@ export default async function CategoriesPage() {
                     alt={cat.name}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-103"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
                 <h2 className="text-xl font-bold text-gray-950 group-hover:text-brand-bronze transition-colors">

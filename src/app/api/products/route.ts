@@ -1,22 +1,34 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { Product } from '@/models/Product';
+import { Category } from '@/models/Category';
 import { isAdminAuthenticated } from '@/lib/auth';
+import mongoose from 'mongoose';
 
 // GET: Fetch products (Public/Admin, support listing all)
 export async function GET(request: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category') || '';
+    const categoryQuery = searchParams.get('category') || '';
     const adminFetch = searchParams.get('admin') === 'true';
 
     const query: any = {};
     if (!adminFetch) {
       query.isActive = true;
     }
-    if (category) {
-      query.category = category;
+    if (categoryQuery) {
+      const isObjectId = mongoose.Types.ObjectId.isValid(categoryQuery);
+      const matchedCategory = await Category.findOne(
+        isObjectId ? { _id: categoryQuery } : { slug: categoryQuery }
+      );
+      if (matchedCategory) {
+        const subCategories = await Category.find({ parent: matchedCategory._id }).select('_id');
+        const ids = [matchedCategory._id, ...subCategories.map((c) => c._id)];
+        query.category = { $in: ids };
+      } else {
+        query.category = categoryQuery;
+      }
     }
 
     const products = await Product.find(query)

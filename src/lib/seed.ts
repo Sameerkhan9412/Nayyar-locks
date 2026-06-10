@@ -78,7 +78,7 @@ const productsData = [
     slug: 'nayyars-solid-brass-heavy-duty-padlock',
     description: 'The Nayyars Solid Brass Padlock offers superior protection for your valuables. Machined from solid brass, it features a double-locking hardened steel shackle that resists cutting and sawing. Perfect for warehouses, lockers, fences, and utility chests. Features high-precision pin cylinders to resist picking and bumping.',
     shortDescription: 'Double-locking hardened steel padlock made from premium solid brass.',
-    categorySlug: 'padlocks',
+    categorySlug: 'brass-padlocks',
     images: ['https://images.unsplash.com/photo-1510519138101-570d1dca3d66?w=600&auto=format&fit=crop&q=80'],
     SKU: 'NY-PL-BR-50',
     brand: 'Nayyars',
@@ -112,7 +112,7 @@ const productsData = [
     slug: 'nayyars-all-weather-armored-shrouded-padlock',
     description: 'Designed specifically for extreme environments, this armored padlock features a shrouded shackle design that prevents bolt-cutter attacks. The hardened steel jacket shields the brass body, while the protective keyway cover keeps out dust, water, and debris. Ideal for marine environments and outdoor gates.',
     shortDescription: 'Bolt-cutter proof armored padlock with weatherproof protective cover.',
-    categorySlug: 'padlocks',
+    categorySlug: 'armored-padlocks',
     images: ['https://images.unsplash.com/photo-1582139329536-e7284fece509?w=600&auto=format&fit=crop&q=80'],
     SKU: 'NY-PL-AR-70',
     brand: 'Nayyars',
@@ -148,7 +148,7 @@ const productsData = [
     slug: 'nayyars-touch-pro-biometric-smart-lock',
     description: 'Step into keyless luxury with the Touch Pro Biometric Smart Lock. Unlock your door in under 0.3 seconds using the semiconductor fingerprint sensor, or choose from a touchscreen keypad, RF card, physical backup key, or our dedicated mobile app. Integrates with smart home systems to track access logs and manage temporary visitor pins.',
     shortDescription: '5-in-1 biometric smart lock with fingerprint, passcode, and app access.',
-    categorySlug: 'smart-locks',
+    categorySlug: 'biometric-smart-locks',
     images: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=600&auto=format&fit=crop&q=80'],
     SKU: 'NY-SL-TP-100',
     brand: 'Nayyars',
@@ -376,12 +376,42 @@ export async function runSeed() {
   const settingsInstance = new Settings(defaultSettings);
   await settingsInstance.save();
 
-  // Seed categories
+  // Seed top-level categories
   const seededCategories = await Category.insertMany(categoriesData);
 
   // Map category slug to mongoose object _id
   const categoryMap: Record<string, string> = {};
   seededCategories.forEach((cat) => {
+    categoryMap[cat.slug] = cat._id.toString();
+  });
+
+  // Seed subcategories
+  const subCategoriesData = [
+    {
+      name: 'Brass Padlocks',
+      slug: 'brass-padlocks',
+      parent: categoryMap['padlocks'],
+      sortOrder: 1,
+      isActive: true,
+    },
+    {
+      name: 'Armored Padlocks',
+      slug: 'armored-padlocks',
+      parent: categoryMap['padlocks'],
+      sortOrder: 2,
+      isActive: true,
+    },
+    {
+      name: 'Biometric Smart Locks',
+      slug: 'biometric-smart-locks',
+      parent: categoryMap['smart-locks'],
+      sortOrder: 1,
+      isActive: true,
+    },
+  ];
+
+  const seededSubCategories = await Category.insertMany(subCategoriesData);
+  seededSubCategories.forEach((cat) => {
     categoryMap[cat.slug] = cat._id.toString();
   });
 
@@ -415,7 +445,7 @@ export async function runSeed() {
   await Review.insertMany(reviewsWithProductRef);
 
   return {
-    categoriesCount: seededCategories.length,
+    categoriesCount: seededCategories.length + seededSubCategories.length,
     productsCount: seededProducts.length,
     reviewsCount: reviewsWithProductRef.length,
     settingsSeeded: true,

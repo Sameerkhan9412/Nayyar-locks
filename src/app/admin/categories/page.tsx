@@ -13,6 +13,7 @@ interface CategoryItem {
   description: string;
   sortOrder: number;
   isActive: boolean;
+  parent?: string | null;
 }
 
 export default function AdminCategoriesPage() {
@@ -28,6 +29,7 @@ export default function AdminCategoriesPage() {
   const [slug, setSlug] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [parent, setParent] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
   const [isActive, setIsActive] = useState(true);
 
@@ -70,6 +72,7 @@ export default function AdminCategoriesPage() {
     setSlug('');
     setImage('');
     setDescription('');
+    setParent('');
     setSortOrder('0');
     setIsActive(true);
   };
@@ -78,8 +81,9 @@ export default function AdminCategoriesPage() {
     setEditingId(cat._id);
     setName(cat.name);
     setSlug(cat.slug);
-    setImage(cat.image);
-    setDescription(cat.description);
+    setImage(cat.image || '');
+    setDescription(cat.description || '');
+    setParent(cat.parent || '');
     setSortOrder(String(cat.sortOrder));
     setIsActive(cat.isActive);
   };
@@ -95,6 +99,7 @@ export default function AdminCategoriesPage() {
       slug,
       image,
       description,
+      parent: parent || null,
       sortOrder: Number(sortOrder),
       isActive,
     };
@@ -229,8 +234,21 @@ export default function AdminCategoriesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <h4 className="font-extrabold text-gray-900">{cat.name}</h4>
-                        <p className="text-xs text-gray-400 font-mono mt-0.5">{cat.slug}</p>
+                        <h4 className="font-extrabold text-gray-900 flex items-center gap-1.5 flex-wrap">
+                          {cat.name}
+                          {cat.parent && (
+                            <span className="rounded bg-brand-bronze/10 border border-brand-bronze/20 px-1.5 py-0.5 text-[9px] font-bold text-brand-bronze uppercase">
+                              Subcategory
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-xs text-gray-400 font-mono mt-0.5">
+                          {cat.slug}
+                          {cat.parent && (() => {
+                            const parentCat = categories.find((c) => c._id === cat.parent);
+                            return parentCat ? ` (Parent: ${parentCat.name})` : '';
+                          })()}
+                        </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className="rounded-md bg-gray-100 px-2.5 py-1 font-mono text-xs text-gray-600">
@@ -313,10 +331,29 @@ export default function AdminCategoriesPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="cat-image-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Image URL / File</label>
+              <label htmlFor="cat-parent-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parent Category (Optional)</label>
+              <select
+                id="cat-parent-input"
+                value={parent}
+                onChange={(e) => setParent(e.target.value)}
+                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze font-semibold bg-white"
+              >
+                <option value="">None (Top-Level Category)</option>
+                {categories
+                  .filter((cat) => !cat.parent && cat._id !== editingId)
+                  .map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="cat-image-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Image URL / File (Optional)</label>
               <ImageUploadInput
                 id="cat-image-input"
-                required
+                required={false}
                 value={image}
                 onChange={setImage}
                 placeholder="https://images.unsplash.com/..."
@@ -324,10 +361,9 @@ export default function AdminCategoriesPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="cat-desc-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Description</label>
+              <label htmlFor="cat-desc-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Description (Optional)</label>
               <textarea
                 id="cat-desc-input"
-                required
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}

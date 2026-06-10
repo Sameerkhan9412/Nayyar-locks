@@ -23,11 +23,11 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await request.json();
-    const { name, slug, image, description, sortOrder, isActive } = body;
+    const { name, slug, image, description, sortOrder, isActive, parent } = body;
 
-    if (!name || !slug || !image || !description) {
+    if (!name || !slug) {
       return NextResponse.json(
-        { success: false, error: 'Please provide all required fields' },
+        { success: false, error: 'Please provide name and slug' },
         { status: 400 }
       );
     }
@@ -56,8 +56,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     category.name = name;
     category.slug = slug.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-    category.image = image;
-    category.description = description;
+    category.image = image || '';
+    category.description = description || '';
+    category.parent = parent || null;
     category.sortOrder = Number(sortOrder) || 0;
     category.isActive = isActive !== undefined ? isActive : true;
 

@@ -38,6 +38,7 @@ interface CategoryOption {
   _id: string;
   name: string;
   slug: string;
+  parent?: string | null;
 }
 
 export default function AdminProductsPage() {
@@ -352,8 +353,17 @@ export default function AdminProductsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-150">
                   {products.map((prod) => {
-                    const catName =
-                      typeof prod.category === 'object' && prod.category ? prod.category.name : '';
+                    let displayCategory = 'Lock';
+                    if (typeof prod.category === 'object' && prod.category) {
+                      const catObj = prod.category as any;
+                      const fullCat = categories.find((c) => c._id === catObj._id);
+                      if (fullCat && fullCat.parent) {
+                        const parentCat = categories.find((c) => c._id === fullCat.parent);
+                        displayCategory = parentCat ? `${parentCat.name} > ${catObj.name}` : catObj.name;
+                      } else {
+                        displayCategory = catObj.name;
+                      }
+                    }
                     return (
                       <tr key={prod._id} className="hover:bg-gray-50/50 font-semibold text-gray-700">
                         <td className="px-4 py-4">
@@ -373,7 +383,7 @@ export default function AdminProductsPage() {
                                 <span>SKU: {prod.SKU}</span>
                                 <span>•</span>
                                 <span className="text-[10px] text-brand-bronze bg-brand-bronze/10 border border-brand-bronze/20 font-bold uppercase px-1 rounded">
-                                  {catName || 'Lock'}
+                                  {displayCategory}
                                 </span>
                               </div>
                             </div>
@@ -522,11 +532,23 @@ export default function AdminProductsPage() {
                   className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
                 >
                   <option value="">Select Category</option>
-                  {categories.map((cat) => (
-                    <option key={cat._id} value={cat._id}>
-                      {cat.name}
-                    </option>
-                  ))}
+                  {categories
+                    .filter((cat) => !cat.parent)
+                    .map((parentCat) => {
+                      const subCats = categories.filter((c) => c.parent === parentCat._id);
+                      return (
+                        <React.Fragment key={parentCat._id}>
+                          <option value={parentCat._id} className="font-bold text-gray-900 bg-gray-100">
+                            {parentCat.name}
+                          </option>
+                          {subCats.map((subCat) => (
+                            <option key={subCat._id} value={subCat._id}>
+                              &nbsp;&nbsp;-- {subCat.name}
+                            </option>
+                          ))}
+                        </React.Fragment>
+                      );
+                    })}
                 </select>
               </div>
             </div>

@@ -32,16 +32,39 @@ export default async function ProductsPage({ searchParams }: PageProps) {
   const skip = (currentPage - 1) * limit;
 
   // Fetch all active categories for sidebar filters
-  const categories = await Category.find({ isActive: true })
-    .sort({ sortOrder: 1 })
-    .lean();
+  const categories = JSON.parse(JSON.stringify(
+    await Category.find({ isActive: true })
+      .sort({ sortOrder: 1 })
+      .lean()
+  ));
 
   // Find category ID if a slug is provided
   let targetCategoryIds: string[] = [];
+  let activeCategoryName = '';
+  let parentCategory: any = null;
+  let subCategoriesOfActive: any[] = [];
+
   if (activeCategorySlug) {
     const matchedCategory = categories.find((c: any) => c.slug === activeCategorySlug);
     if (matchedCategory) {
       targetCategoryIds.push(matchedCategory._id.toString());
+      activeCategoryName = matchedCategory.name;
+
+      if (matchedCategory.parent) {
+        // This is a subcategory, find its parent
+        parentCategory = categories.find((c: any) => c._id.toString() === matchedCategory.parent.toString());
+        // Find sibling subcategories
+        subCategoriesOfActive = categories.filter(
+          (c: any) => c.parent && c.parent.toString() === matchedCategory.parent.toString()
+        );
+      } else {
+        // This is a parent category, get all its subcategories
+        const subs = categories.filter(
+          (c: any) => c.parent && c.parent.toString() === matchedCategory._id.toString()
+        );
+        subs.forEach((sub: any) => targetCategoryIds.push(sub._id.toString()));
+        subCategoriesOfActive = subs;
+      }
     }
   }
 
@@ -77,22 +100,24 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
   // Sorting
   let sortOption: any = { createdAt: -1 };
-  if (sortBy === 'price-asc') {
-    sortOption = { price: 1 };
-  } else if (sortBy === 'price-desc') {
-    sortOption = { price: -1 };
+  if (sortBy === 'name-asc') {
+    sortOption = { name: 1 };
+  } else if (sortBy === 'name-desc') {
+    sortOption = { name: -1 };
   } else if (sortBy === 'newest') {
     sortOption = { createdAt: -1 };
   }
 
   // Execute Query with Pagination
   const totalProducts = await Product.countDocuments(query);
-  const products = await Product.find(query)
-    .populate('category', 'name slug')
-    .sort(sortOption)
-    .skip(skip)
-    .limit(limit)
-    .lean();
+  const products = JSON.parse(JSON.stringify(
+    await Product.find(query)
+      .populate('category', 'name slug')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit)
+      .lean()
+  ));
 
   const totalPages = Math.ceil(totalProducts / limit);
 
@@ -160,17 +185,24 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                 >
                   All Products
                 </Link>
-                {categories.map((cat: any) => (
-                  <Link
-                    key={cat._id.toString()}
-                    href={buildFilterLink({ category: cat.slug, page: 1 })}
-                    className={`rounded-xl px-3 py-2 text-left transition-all hover:bg-gray-50 hover:text-brand-bronze ${
-                      activeCategorySlug === cat.slug ? 'bg-brand-bronze/5 text-brand-bronze font-bold' : ''
-                    }`}
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
+                {categories
+                  .filter((cat: any) => !cat.parent)
+                  .map((cat: any) => {
+                    const isParentActive =
+                      activeCategorySlug === cat.slug ||
+                      (parentCategory && parentCategory.slug === cat.slug);
+                    return (
+                      <Link
+                        key={cat._id.toString()}
+                        href={buildFilterLink({ category: cat.slug, page: 1 })}
+                        className={`rounded-xl px-3 py-2 text-left transition-all hover:bg-gray-50 hover:text-brand-bronze ${
+                          isParentActive ? 'bg-brand-bronze/5 text-brand-bronze font-bold' : ''
+                        }`}
+                      >
+                        {cat.name}
+                      </Link>
+                    );
+                  })}
               </div>
             </div>
 
@@ -190,20 +222,20 @@ export default async function ProductsPage({ searchParams }: PageProps) {
                   New Arrivals
                 </Link>
                 <Link
-                  href={buildFilterLink({ sort: 'price-asc', page: 1 })}
+                  href={buildFilterLink({ sort: 'name-asc', page: 1 })}
                   className={`rounded-xl px-3 py-2 text-left transition-all hover:bg-gray-50 hover:text-brand-bronze ${
-                    sortBy === 'price-asc' ? 'bg-brand-bronze/5 text-brand-bronze font-bold' : ''
+                    sortBy === 'name-asc' ? 'bg-brand-bronze/5 text-brand-bronze font-bold' : ''
                   }`}
                 >
-                  Price: Low to High
+                  Name: A to Z
                 </Link>
                 <Link
-                  href={buildFilterLink({ sort: 'price-desc', page: 1 })}
+                  href={buildFilterLink({ sort: 'name-desc', page: 1 })}
                   className={`rounded-xl px-3 py-2 text-left transition-all hover:bg-gray-50 hover:text-brand-bronze ${
-                    sortBy === 'price-desc' ? 'bg-brand-bronze/5 text-brand-bronze font-bold' : ''
+                    sortBy === 'name-desc' ? 'bg-brand-bronze/5 text-brand-bronze font-bold' : ''
                   }`}
                 >
-                  Price: High to Low
+                  Name: Z to A
                 </Link>
               </div>
             </div>
@@ -211,6 +243,40 @@ export default async function ProductsPage({ searchParams }: PageProps) {
 
           {/* Right Panel: Products Grid */}
           <div className="lg:col-span-3">
+            {/* Subcategories Filter Chips */}
+            {activeCategorySlug && subCategoriesOfActive.length > 0 && (
+              <div className="mb-6 p-4 bg-white border border-gray-150 rounded-2xl shadow-sm text-left">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-brand-bronze block mb-2.5">
+                  Subcategories
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={buildFilterLink({ category: parentCategory ? parentCategory.slug : activeCategorySlug, page: 1 })}
+                    className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all border ${
+                      !parentCategory
+                        ? 'bg-brand-bronze text-white border-brand-bronze shadow-md shadow-brand-bronze/10'
+                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    All {parentCategory ? parentCategory.name : activeCategoryName}
+                  </Link>
+                  {subCategoriesOfActive.map((sub: any) => (
+                    <Link
+                      key={sub._id.toString()}
+                      href={buildFilterLink({ category: sub.slug, page: 1 })}
+                      className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all border ${
+                        activeCategorySlug === sub.slug
+                          ? 'bg-brand-bronze text-white border-brand-bronze shadow-md shadow-brand-bronze/10'
+                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {products.map((prod: any) => (
