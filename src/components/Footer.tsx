@@ -3,6 +3,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Clock } from 'lucide-react';
 import { FacebookIcon, InstagramIcon, TwitterIcon, LinkedinIcon } from './SocialIcons';
+import mainLogo from "../app/assets/logo.png"
+
 
 interface FooterProps {
   siteName: string;
@@ -38,7 +40,7 @@ export default function Footer({ siteName, logo, contact, socialLinks, footer, b
               {logo ? (
                 <div className="relative h-15 w-40">
                   <Image
-                    src={logo}
+                    src={mainLogo}
                     alt={siteName}
                     fill
                     sizes="128px"
@@ -89,9 +91,9 @@ export default function Footer({ siteName, logo, contact, socialLinks, footer, b
               <li>
                 <Link href="/" className="hover:text-white transition-colors">Home</Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="/categories" className="hover:text-white transition-colors">Categories</Link>
-              </li>
+              </li> */}
               <li>
                 <Link href="/products" className="hover:text-white transition-colors">Products</Link>
               </li>

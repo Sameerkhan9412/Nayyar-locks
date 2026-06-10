@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Plus, X, Upload, Loader2, AlertCircle, Image as ImageIcon } from 'lucide-react';
+import { Plus, X, Upload, Loader2, AlertCircle, Image as ImageIcon, Eye } from 'lucide-react';
 
 interface MultiImageUploadProps {
   values: string[];
@@ -13,6 +13,7 @@ export default function MultiImageUpload({ values = [], onChange }: MultiImageUp
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [manualUrl, setManualUrl] = useState('');
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
@@ -103,8 +104,16 @@ export default function MultiImageUpload({ values = [], onChange }: MultiImageUp
               sizes="(max-width: 640px) 50vw, 33vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
-            {/* Hover overlay with Delete Button */}
-            <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            {/* Hover overlay with Actions */}
+            <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setLightboxUrl(url)}
+                className="rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-xs p-2 text-white shadow-lg transition-colors transform scale-90 group-hover:scale-100 duration-200"
+                title="View full size"
+              >
+                <Eye className="h-4 w-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => handleRemoveImage(idx)}
@@ -176,6 +185,28 @@ export default function MultiImageUpload({ values = [], onChange }: MultiImageUp
         <div className="flex items-start gap-1 text-[11px] font-semibold text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-100 mt-2">
           <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
           <span>{error}</span>
+        </div>
+      )}
+      {/* Lightbox Modal */}
+      {lightboxUrl && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-xl bg-gray-950 flex items-center justify-center shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={lightboxUrl} 
+              alt="Full size view" 
+              className="object-contain max-w-full max-h-[80vh] border border-gray-800 rounded-lg shadow-lg"
+            />
+            <button
+              type="button"
+              className="absolute top-3 right-3 rounded-full bg-black/60 p-2 text-white hover:bg-black/85 transition-colors shadow-md"
+              onClick={() => setLightboxUrl(null)}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       )}
     </div>

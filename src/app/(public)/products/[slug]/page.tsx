@@ -28,7 +28,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const categoryObj = typeof product.category === 'object' && product.category ? product.category : null;
+  const categoryObj = typeof product.category === 'object' && product.category ? (product.category as any) : null;
 
   return (
     <div className="py-16 bg-gray-50/50 min-h-screen flex flex-col items-center">

@@ -50,21 +50,12 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (
       !name ||
       !slug ||
-      !description ||
-      !shortDescription ||
       !category ||
       !images ||
-      images.length === 0 ||
-      !SKU ||
-      !brand ||
-      price === undefined ||
-      originalPrice === undefined ||
-      !material ||
-      !keyType ||
-      !securityGrade
+      images.length === 0
     ) {
       return NextResponse.json(
-        { success: false, error: 'Please provide all required fields' },
+        { success: false, error: 'Please provide all required fields: name, slug, category, and at least one image' },
         { status: 400 }
       );
     }
@@ -105,25 +96,25 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
     product.name = name;
     product.slug = slug.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
-    product.description = description;
-    product.shortDescription = shortDescription;
+    product.description = description !== undefined ? description : (product.description || '');
+    product.shortDescription = shortDescription !== undefined ? shortDescription : (product.shortDescription || '');
     product.category = category;
     product.images = images;
-    product.SKU = SKU;
-    product.brand = brand;
-    product.price = Number(price);
-    product.originalPrice = Number(originalPrice);
-    product.material = material;
-    product.keyType = keyType;
-    product.securityGrade = securityGrade;
-    product.features = features || [];
-    product.specifications = specifications || {};
-    product.tags = tags || [];
-    product.isActive = isActive !== undefined ? isActive : true;
-    product.isFeatured = isFeatured !== undefined ? isFeatured : false;
-    product.isBestseller = isBestseller !== undefined ? isBestseller : false;
-    product.isNewArrival = isNewArrival !== undefined ? isNewArrival : false;
-    product.whatsappOverride = whatsappOverride || undefined;
+    product.SKU = SKU || product.SKU || 'SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    product.brand = brand !== undefined ? brand : (product.brand || 'Nayyars');
+    product.price = price !== undefined ? Number(price) : (product.price || 0);
+    product.originalPrice = originalPrice !== undefined ? Number(originalPrice) : (product.originalPrice || 0);
+    product.material = material !== undefined ? material : (product.material || '');
+    product.keyType = keyType !== undefined ? keyType : (product.keyType || '');
+    product.securityGrade = securityGrade !== undefined ? securityGrade : (product.securityGrade || '');
+    product.features = features !== undefined ? features : (product.features || []);
+    product.specifications = specifications !== undefined ? specifications : (product.specifications || {});
+    product.tags = tags !== undefined ? tags : (product.tags || []);
+    product.isActive = isActive !== undefined ? isActive : product.isActive;
+    product.isFeatured = isFeatured !== undefined ? isFeatured : product.isFeatured;
+    product.isBestseller = isBestseller !== undefined ? isBestseller : product.isBestseller;
+    product.isNewArrival = isNewArrival !== undefined ? isNewArrival : product.isNewArrival;
+    product.whatsappOverride = whatsappOverride !== undefined ? whatsappOverride : product.whatsappOverride;
 
     await product.save();
 

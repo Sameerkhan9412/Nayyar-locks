@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Plus, Edit2, Trash2, Save, X, Loader2 } from 'lucide-react';
+import { ShoppingBag, Plus, Edit2, Trash2, Save, X, Loader2, Eye } from 'lucide-react';
 import Image from 'next/image';
 import MultiImageUpload from '@/components/MultiImageUpload';
 
@@ -53,25 +53,15 @@ export default function AdminProductsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState('');
-  const [shortDescription, setShortDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [parentCategory, setParentCategory] = useState('');
+  const [subCategory, setSubCategory] = useState('');
+  const [previewProduct, setPreviewProduct] = useState<any | null>(null);
+  const [previewActiveImage, setPreviewActiveImage] = useState<string>('');
   const [images, setImages] = useState<string[]>([]);
-  const [SKU, setSKU] = useState('');
-  const [brand, setBrand] = useState('Nayyars');
-  const [price, setPrice] = useState('0');
-  const [originalPrice, setOriginalPrice] = useState('0');
-  const [material, setMaterial] = useState('');
-  const [keyType, setKeyType] = useState('');
-  const [securityGrade, setSecurityGrade] = useState('');
-  const [featuresStr, setFeaturesStr] = useState('');
-  const [specificationsStr, setSpecificationsStr] = useState('');
-  const [tagsStr, setTagsStr] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
   const [isBestseller, setIsBestseller] = useState(false);
   const [isNewArrival, setIsNewArrival] = useState(false);
-  const [whatsappOverride, setWhatsappOverride] = useState('');
 
   const loadData = async () => {
     try {
@@ -118,60 +108,35 @@ export default function AdminProductsPage() {
     setEditingId(null);
     setName('');
     setSlug('');
-    setDescription('');
-    setShortDescription('');
-    setCategory('');
+    setParentCategory('');
+    setSubCategory('');
     setImages([]);
-    setSKU('');
-    setBrand('Nayyars');
-    setPrice('0');
-    setOriginalPrice('0');
-    setMaterial('');
-    setKeyType('');
-    setSecurityGrade('');
-    setFeaturesStr('');
-    setSpecificationsStr('');
-    setTagsStr('');
     setIsActive(true);
     setIsFeatured(false);
     setIsBestseller(false);
     setIsNewArrival(false);
-    setWhatsappOverride('');
   };
 
   const handleEdit = (prod: ProductItem) => {
     setEditingId(prod._id);
     setName(prod.name);
     setSlug(prod.slug);
-    setDescription(prod.description);
-    setShortDescription(prod.shortDescription);
-    setCategory(
-      typeof prod.category === 'object' && prod.category ? prod.category._id : (prod.category as string) || ''
-    );
+    
+    const catId = typeof prod.category === 'object' && prod.category ? prod.category._id : (prod.category as string) || '';
+    const matchedCat = categories.find((c) => c._id === catId);
+    if (matchedCat && matchedCat.parent) {
+      setParentCategory(matchedCat.parent);
+      setSubCategory(catId);
+    } else {
+      setParentCategory(catId);
+      setSubCategory('');
+    }
+
     setImages(prod.images || []);
-    setSKU(prod.SKU);
-    setBrand(prod.brand);
-    setPrice(String(prod.price));
-    setOriginalPrice(String(prod.originalPrice));
-    setMaterial(prod.material);
-    setKeyType(prod.keyType);
-    setSecurityGrade(prod.securityGrade);
-    setFeaturesStr(prod.features?.join('\n') || '');
-
-    // Parse specifications map back to key:value string rows
-    const specRows = prod.specifications
-      ? Object.entries(prod.specifications)
-          .map(([k, v]) => `${k}: ${v}`)
-          .join('\n')
-      : '';
-    setSpecificationsStr(specRows);
-
-    setTagsStr(prod.tags?.join(', ') || '');
     setIsActive(prod.isActive);
     setIsFeatured(prod.isFeatured);
     setIsBestseller(prod.isBestseller);
     setIsNewArrival(prod.isNewArrival);
-    setWhatsappOverride(prod.whatsappOverride || '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,7 +144,8 @@ export default function AdminProductsPage() {
     setError('');
     setSuccess('');
 
-    if (!category) {
+    const finalCategory = subCategory || parentCategory;
+    if (!finalCategory) {
       setError('Please select a product category');
       return;
     }
@@ -191,48 +157,15 @@ export default function AdminProductsPage() {
 
     setSaving(true);
 
-    // Parse specifications text area (format: Key: Value, key2: value2)
-    const specifications: Record<string, string> = {};
-    specificationsStr.split('\n').forEach((line) => {
-      const trimmed = line.trim();
-      if (trimmed.includes(':')) {
-        const parts = trimmed.split(':');
-        const key = parts[0].trim();
-        const val = parts.slice(1).join(':').trim();
-        if (key && val) {
-          specifications[key] = val;
-        }
-      }
-    });
-
     const payload = {
       name,
       slug,
-      description,
-      shortDescription,
-      category,
+      category: finalCategory,
       images: images,
-      SKU,
-      brand,
-      price: Number(price),
-      originalPrice: Number(originalPrice),
-      material,
-      keyType,
-      securityGrade,
-      features: featuresStr
-        .split('\n')
-        .map((f) => f.trim())
-        .filter((f) => f.length > 0),
-      specifications,
-      tags: tagsStr
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0),
       isActive,
       isFeatured,
       isBestseller,
       isNewArrival,
-      whatsappOverride: whatsappOverride || undefined,
     };
 
     try {
@@ -303,6 +236,51 @@ export default function AdminProductsPage() {
     } catch (err) {
       console.error('Toggle flag error:', err);
     }
+  };
+
+  const handleView = (prod: ProductItem) => {
+    let catName = 'Lock';
+    let subCatName = '';
+    
+    const catId = typeof prod.category === 'object' && prod.category ? prod.category._id : (prod.category as string) || '';
+    const matchedCat = categories.find((c) => c._id === catId);
+    if (matchedCat) {
+      if (matchedCat.parent) {
+        const parentCat = categories.find((c) => c._id === matchedCat.parent);
+        catName = parentCat ? parentCat.name : '';
+        subCatName = matchedCat.name;
+      } else {
+        catName = matchedCat.name;
+      }
+    }
+
+    setPreviewProduct({
+      ...prod,
+      displayParentCategory: catName,
+      displaySubCategory: subCatName,
+    });
+    setPreviewActiveImage(prod.images[0] || 'https://images.unsplash.com/photo-1510519138101-570d1dca3d66?w=800&auto=format&fit=crop&q=80');
+  };
+
+  const handleFormPreview = () => {
+    let catName = 'Lock';
+    let subCatName = '';
+    const parentCatObj = categories.find(c => c._id === parentCategory);
+    if (parentCatObj) {
+      catName = parentCatObj.name;
+    }
+    const subCatObj = categories.find(c => c._id === subCategory);
+    if (subCatObj) {
+      subCatName = subCatObj.name;
+    }
+
+    setPreviewProduct({
+      name: name || 'Untitled Product',
+      displayParentCategory: catName,
+      displaySubCategory: subCatName,
+      images: images.length > 0 ? images : ['https://images.unsplash.com/photo-1510519138101-570d1dca3d66?w=800&auto=format&fit=crop&q=80'],
+    });
+    setPreviewActiveImage(images[0] || 'https://images.unsplash.com/photo-1510519138101-570d1dca3d66?w=800&auto=format&fit=crop&q=80');
   };
 
   if (loading) {
@@ -436,15 +414,25 @@ export default function AdminProductsPage() {
                         <td className="px-4 py-4 whitespace-nowrap text-right">
                           <div className="flex justify-end gap-1.5">
                             <button
+                              type="button"
+                              onClick={() => handleView(prod)}
+                              className="rounded-xl border border-gray-200 bg-white p-2 text-gray-600 hover:text-brand-bronze hover:bg-brand-bronze/5 hover:border-brand-bronze/25 transition-all"
+                              title="View details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleEdit(prod)}
-                              className="rounded-xl border border-gray-200 bg-white p-2 text-gray-650 hover:text-brand-bronze hover:bg-brand-bronze/5 hover:border-brand-bronze/25 transition-all"
+                              className="rounded-xl border border-gray-200 bg-white p-2 text-gray-600 hover:text-brand-bronze hover:bg-brand-bronze/5 hover:border-brand-bronze/25 transition-all"
                               title="Edit item"
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleDelete(prod._id)}
-                              className="rounded-xl border border-red-200 bg-red-50 p-2 text-red-650 hover:bg-red-100 transition-all"
+                              className="rounded-xl border border-red-200 bg-red-50 p-2 text-red-600 hover:bg-red-100 transition-all"
                               title="Delete item"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -484,149 +472,48 @@ export default function AdminProductsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-slug-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">URL Slug</label>
-                <input
-                  type="text"
-                  id="prod-slug-input"
-                  required
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-sku-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">SKU Code</label>
-                <input
-                  type="text"
-                  id="prod-sku-input"
-                  required
-                  value={SKU}
-                  onChange={(e) => setSKU(e.target.value)}
-                  placeholder="NY-ML-BR-45"
-                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-brand-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Brand</label>
-                <input
-                  type="text"
-                  id="prod-brand-input"
-                  required
-                  value={brand}
-                  onChange={(e) => setBrand(e.target.value)}
-                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="prod-category-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Category</label>
                 <select
                   id="prod-category-input"
                   required
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
+                  value={parentCategory}
+                  onChange={(e) => {
+                    setParentCategory(e.target.value);
+                    setSubCategory('');
+                  }}
+                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze font-semibold"
                 >
                   <option value="">Select Category</option>
                   {categories
                     .filter((cat) => !cat.parent)
-                    .map((parentCat) => {
-                      const subCats = categories.filter((c) => c.parent === parentCat._id);
-                      return (
-                        <React.Fragment key={parentCat._id}>
-                          <option value={parentCat._id} className="font-bold text-gray-900 bg-gray-100">
-                            {parentCat.name}
-                          </option>
-                          {subCats.map((subCat) => (
-                            <option key={subCat._id} value={subCat._id}>
-                              &nbsp;&nbsp;-- {subCat.name}
-                            </option>
-                          ))}
-                        </React.Fragment>
-                      );
-                    })}
+                    .map((parentCat) => (
+                      <option key={parentCat._id} value={parentCat._id}>
+                        {parentCat.name}
+                      </option>
+                    ))}
                 </select>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-price-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Price (₹)</label>
-                <input
-                  type="number"
-                  id="prod-price-input"
-                  required
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
+                <label htmlFor="prod-subcategory-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sub Category</label>
+                <select
+                  id="prod-subcategory-input"
+                  value={subCategory}
+                  onChange={(e) => setSubCategory(e.target.value)}
+                  disabled={!parentCategory}
+                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze font-semibold disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                >
+                  <option value="">None (Optional)</option>
+                  {categories
+                    .filter((cat) => cat.parent === parentCategory)
+                    .map((subCat) => (
+                      <option key={subCat._id} value={subCat._id}>
+                        {subCat.name}
+                      </option>
+                    ))}
+                </select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-orig-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Original Price (₹)</label>
-                <input
-                  type="number"
-                  id="prod-orig-input"
-                  required
-                  value={originalPrice}
-                  onChange={(e) => setOriginalPrice(e.target.value)}
-                  className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-material-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider text-[10px]">Material</label>
-                <input
-                  type="text"
-                  id="prod-material-input"
-                  required
-                  value={material}
-                  onChange={(e) => setMaterial(e.target.value)}
-                  placeholder="e.g. Brass"
-                  className="rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-key-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider text-[10px]">Key Type</label>
-                <input
-                  type="text"
-                  id="prod-key-input"
-                  required
-                  value={keyType}
-                  onChange={(e) => setKeyType(e.target.value)}
-                  placeholder="Dimple Key"
-                  className="rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="prod-grade-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider text-[10px]">Security Grade</label>
-                <input
-                  type="text"
-                  id="prod-grade-input"
-                  required
-                  value={securityGrade}
-                  onChange={(e) => setSecurityGrade(e.target.value)}
-                  placeholder="Grade 4"
-                  className="rounded-xl border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="prod-override-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">WhatsApp Number Override (Optional)</label>
-              <input
-                type="text"
-                id="prod-override-input"
-                value={whatsappOverride}
-                onChange={(e) => setWhatsappOverride(e.target.value)}
-                placeholder="Defaults to setting WhatsApp if empty"
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-              />
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -638,66 +525,6 @@ export default function AdminProductsPage() {
               <p className="text-[10px] text-gray-400 font-semibold mt-0.5">
                 Upload images directly using Cloudinary or add external URLs dynamically.
               </p>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="prod-short-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Short Description</label>
-              <input
-                type="text"
-                id="prod-short-input"
-                required
-                value={shortDescription}
-                onChange={(e) => setShortDescription(e.target.value)}
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="prod-desc-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Full Detailed Description</label>
-              <textarea
-                id="prod-desc-input"
-                required
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze resize-none"
-              ></textarea>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="prod-features-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Features List (One per line)</label>
-              <textarea
-                id="prod-features-input"
-                value={featuresStr}
-                onChange={(e) => setFeaturesStr(e.target.value)}
-                rows={3}
-                placeholder="Hardened shackle&#10;Anti-drill plate&#10;Pick resistant core"
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze resize-none font-sans"
-              ></textarea>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="prod-specs-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Specifications (Format: Key: Value, one per line)</label>
-              <textarea
-                id="prod-specs-input"
-                value={specificationsStr}
-                onChange={(e) => setSpecificationsStr(e.target.value)}
-                rows={3}
-                placeholder="Body Width: 50 mm&#10;Shackle Clearance: 25 mm&#10;Weight: 350 grams"
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze resize-none font-sans"
-              ></textarea>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="prod-tags-input" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Tags (Comma-separated)</label>
-              <input
-                type="text"
-                id="prod-tags-input"
-                value={tagsStr}
-                onChange={(e) => setTagsStr(e.target.value)}
-                placeholder="brass, padlock, outdoor, heavy-duty"
-                className="rounded-xl border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-brand-bronze focus:ring-1 focus:ring-brand-bronze"
-              />
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
@@ -740,6 +567,14 @@ export default function AdminProductsPage() {
             </div>
 
             <div className="flex gap-2 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={handleFormPreview}
+                className="flex-1 rounded-xl border border-brand-bronze/35 bg-brand-bronze/5 py-3.5 text-xs font-bold text-brand-bronze hover:bg-brand-bronze/10 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <Eye className="h-4 w-4" />
+                Preview Product
+              </button>
               {editingId && (
                 <button
                   type="button"
@@ -767,6 +602,223 @@ export default function AdminProductsPage() {
           </form>
         </div>
       </div>
+      {/* Product Details Preview Modal (Large View Screen) */}
+      {previewProduct && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => setPreviewProduct(null)}
+        >
+          <div 
+            className="relative bg-white rounded-3xl border border-gray-200 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-250"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 bg-gray-50/70">
+              <div className="text-left">
+                <h3 className="text-lg font-extrabold text-gray-900 flex items-center gap-2">
+                  <span>{previewProduct.name}</span>
+                  {previewProduct.SKU && !previewProduct.SKU.startsWith('SKU-') && (
+                    <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded font-mono">
+                      SKU: {previewProduct.SKU}
+                    </span>
+                  )}
+                </h3>
+                <p className="text-xs text-gray-500 font-semibold mt-0.5">
+                  Product Details Preview Screen
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewProduct(null)}
+                className="rounded-full bg-white border border-gray-200 p-2 text-gray-500 hover:text-gray-900 hover:shadow transition-all"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content Area (Scrollable) */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* Left Column: Image Gallery */}
+                <div className="lg:col-span-5 flex flex-col gap-4">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-gray-50 border border-gray-200 shadow-inner">
+                    <Image
+                      src={previewActiveImage}
+                      alt={previewProduct.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 400px"
+                      className="object-cover"
+                    />
+                  </div>
+                  {previewProduct.images && previewProduct.images.length > 1 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {previewProduct.images.map((img: string, idx: number) => {
+                        const isActive = previewActiveImage === img;
+                        return (
+                          <button
+                            key={`${img}-${idx}`}
+                            type="button"
+                            onClick={() => setPreviewActiveImage(img)}
+                            className={`relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50 transition-all ${
+                              isActive
+                                ? 'border-2 border-brand-bronze ring-2 ring-brand-bronze/10'
+                                : 'border border-gray-200 hover:border-brand-bronze/40'
+                            }`}
+                          >
+                            <Image
+                              src={img}
+                              alt={`Preview view ${idx + 1}`}
+                              fill
+                              sizes="100px"
+                              className="object-cover"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Details */}
+                <div className="lg:col-span-7 space-y-6 text-left">
+                  {/* Category & Badges */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] text-brand-bronze bg-brand-bronze/10 border border-brand-bronze/20 font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                      {previewProduct.displayParentCategory}
+                    </span>
+                    {previewProduct.displaySubCategory && (
+                      <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                        {previewProduct.displaySubCategory}
+                      </span>
+                    )}
+                    {previewProduct.brand && previewProduct.brand !== 'Nayyars' && (
+                      <span className="text-[10px] text-gray-500 bg-gray-100 border border-gray-200 font-bold uppercase px-2 py-0.5 rounded">
+                        Brand: {previewProduct.brand}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Pricing */}
+                  {Number(previewProduct.price) > 0 && (
+                    <div className="flex items-baseline gap-3">
+                      <p className="text-3xl font-extrabold text-gray-900">₹{Number(previewProduct.price).toLocaleString('en-IN')}</p>
+                      {Number(previewProduct.originalPrice) > Number(previewProduct.price) && (
+                        <>
+                          <span className="text-base text-gray-400 line-through font-semibold">
+                            ₹{Number(previewProduct.originalPrice).toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded">
+                            {Math.round(((previewProduct.originalPrice - previewProduct.price) / previewProduct.originalPrice) * 100)}% OFF
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Attributes Grid */}
+                  {((previewProduct.material && previewProduct.material !== 'N/A' && previewProduct.material !== '') || 
+                    (previewProduct.keyType && previewProduct.keyType !== 'N/A' && previewProduct.keyType !== '') || 
+                    (previewProduct.securityGrade && previewProduct.securityGrade !== 'N/A' && previewProduct.securityGrade !== '')) && (
+                    <div className="grid grid-cols-3 gap-2 bg-gray-50 border border-gray-200 rounded-2xl p-4">
+                      {previewProduct.material && previewProduct.material !== 'N/A' && previewProduct.material !== '' && (
+                        <div className="text-center border-r border-gray-200">
+                          <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Material</span>
+                          <span className="text-xs font-extrabold text-gray-800 mt-0.5 block">{previewProduct.material}</span>
+                        </div>
+                      )}
+                      {previewProduct.keyType && previewProduct.keyType !== 'N/A' && previewProduct.keyType !== '' && (
+                        <div className="text-center border-r border-gray-200">
+                          <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Key Type</span>
+                          <span className="text-xs font-extrabold text-gray-800 mt-0.5 block">{previewProduct.keyType}</span>
+                        </div>
+                      )}
+                      {previewProduct.securityGrade && previewProduct.securityGrade !== 'N/A' && previewProduct.securityGrade !== '' && (
+                        <div className="text-center">
+                          <span className="block text-[9px] font-bold text-gray-400 uppercase tracking-wider">Security</span>
+                          <span className="text-xs font-extrabold text-gray-800 mt-0.5 block">{previewProduct.securityGrade}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Descriptions */}
+                  {((previewProduct.shortDescription && previewProduct.shortDescription !== 'No short description provided.' && previewProduct.shortDescription !== '') || 
+                    (previewProduct.description && previewProduct.description !== 'No description provided.' && previewProduct.description !== '')) && (
+                    <div className="space-y-2">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Overview</h4>
+                      {previewProduct.shortDescription && previewProduct.shortDescription !== 'No short description provided.' && previewProduct.shortDescription !== '' && (
+                        <p className="text-sm font-semibold text-gray-850 leading-relaxed italic bg-amber-50/30 border border-amber-100/50 p-3 rounded-xl">
+                          {previewProduct.shortDescription}
+                        </p>
+                      )}
+                      {previewProduct.description && previewProduct.description !== 'No description provided.' && previewProduct.description !== '' && (
+                        <p className="text-sm font-medium text-gray-700 leading-relaxed whitespace-pre-line">
+                          {previewProduct.description}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {((previewProduct.features && previewProduct.features.length > 0) || 
+                (previewProduct.specifications && Object.keys(previewProduct.specifications).length > 0)) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-200 pt-8">
+                  {/* Key Features */}
+                  {previewProduct.features && previewProduct.features.length > 0 && (
+                    <div className="space-y-3 text-left">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Key Features</h4>
+                      <ul className="grid grid-cols-1 gap-2">
+                        {previewProduct.features.map((feature: string, idx: number) => (
+                          <li key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs font-semibold text-gray-800">
+                            <span className="h-1.5 w-1.5 rounded-full bg-brand-bronze flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Technical Specifications */}
+                  {previewProduct.specifications && Object.keys(previewProduct.specifications).length > 0 && (
+                    <div className="space-y-3 text-left">
+                      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Technical Specifications</h4>
+                      <div className="rounded-xl border border-gray-200 overflow-hidden bg-white">
+                        <table className="w-full text-xs text-left">
+                          <tbody className="divide-y divide-gray-200">
+                            {Object.entries(previewProduct.specifications).map(([key, val]: any) => (
+                              <tr key={key} className="hover:bg-gray-50/50">
+                                <td className="px-4 py-3 font-bold text-gray-500 bg-gray-50/50 w-1/3 border-r border-gray-200">{key}</td>
+                                <td className="px-4 py-3 font-semibold text-gray-800">{val}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-gray-200 px-6 py-4 bg-gray-50 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 rounded-full px-3 py-1 animate-pulse select-none">
+                Live Preview Mode
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewProduct(null)}
+                className="rounded-xl bg-brand-black hover:bg-brand-black/90 text-white px-5 py-2 text-xs font-bold shadow-md transition-all"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

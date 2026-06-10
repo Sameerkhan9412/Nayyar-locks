@@ -30,18 +30,23 @@ export interface IProduct {
 const ProductSchema = new Schema<IProduct>(
   {
     name: { type: String, required: true },
-    slug: { type: String, required: true, unique: true, index: true },
-    description: { type: String, required: true },
-    shortDescription: { type: String, required: true },
+    slug: { type: String, unique: true, index: true },
+    description: { type: String, default: '' },
+    shortDescription: { type: String, default: '' },
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true, index: true },
     images: { type: [String], required: true },
-    SKU: { type: String, required: true, unique: true, index: true },
-    brand: { type: String, required: true },
-    price: { type: Number, required: true },
-    originalPrice: { type: Number, required: true },
-    material: { type: String, required: true },
-    keyType: { type: String, required: true },
-    securityGrade: { type: String, required: true },
+    SKU: { 
+      type: String, 
+      default: () => 'SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000), 
+      unique: true, 
+      index: true 
+    },
+    brand: { type: String, default: 'Nayyars' },
+    price: { type: Number, default: 0 },
+    originalPrice: { type: Number, default: 0 },
+    material: { type: String, default: '' },
+    keyType: { type: String, default: '' },
+    securityGrade: { type: String, default: '' },
     features: { type: [String], default: [] },
     specifications: { type: Schema.Types.Map, of: String, default: {} },
     tags: { type: [String], default: [] },
@@ -54,4 +59,8 @@ const ProductSchema = new Schema<IProduct>(
   { timestamps: true }
 );
 
-export const Product = models.Product || model('Product', ProductSchema);
+if (mongoose.models && mongoose.models.Product) {
+  delete mongoose.models.Product;
+}
+
+export const Product = mongoose.model('Product', ProductSchema);

@@ -86,21 +86,12 @@ export async function POST(request: Request) {
     if (
       !name ||
       !slug ||
-      !description ||
-      !shortDescription ||
       !category ||
       !images ||
-      images.length === 0 ||
-      !SKU ||
-      !brand ||
-      price === undefined ||
-      originalPrice === undefined ||
-      !material ||
-      !keyType ||
-      !securityGrade
+      images.length === 0
     ) {
       return NextResponse.json(
-        { success: false, error: 'Please provide all required fields' },
+        { success: false, error: 'Please provide all required fields: name, slug, category, and at least one image' },
         { status: 400 }
       );
     }
@@ -127,17 +118,17 @@ export async function POST(request: Request) {
     const newProduct = new Product({
       name,
       slug: slug.toLowerCase().replace(/[^a-z0-9-_]/g, '-'),
-      description,
-      shortDescription,
+      description: description || '',
+      shortDescription: shortDescription || '',
       category,
       images,
-      SKU,
-      brand,
-      price: Number(price),
-      originalPrice: Number(originalPrice),
-      material,
-      keyType,
-      securityGrade,
+      SKU: SKU || 'SKU-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      brand: brand || 'Nayyars',
+      price: price !== undefined ? Number(price) : 0,
+      originalPrice: originalPrice !== undefined ? Number(originalPrice) : 0,
+      material: material || '',
+      keyType: keyType || '',
+      securityGrade: securityGrade || '',
       features: features || [],
       specifications: specifications || {},
       tags: tags || [],

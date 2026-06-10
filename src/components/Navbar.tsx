@@ -5,12 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X, ShieldAlert, Settings as SettingsIcon } from 'lucide-react';
 import SearchBar from './SearchBar';
+import mainLogo from "../app/assets/logo.png"
 
 interface NavbarProps {
   siteName: string;
   logo?: string;
   brochureUrl?: string;
 }
+
 
 export default function Navbar({ siteName, logo, brochureUrl }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +25,7 @@ export default function Navbar({ siteName, logo, brochureUrl }: NavbarProps) {
           {logo ? (
             <div className="relative h-14 w-34 rounded-md">
               <Image
-                src={logo}
+                src={mainLogo}
                 alt={siteName}
                 fill
                 sizes="128px"
@@ -43,9 +45,9 @@ export default function Navbar({ siteName, logo, brochureUrl }: NavbarProps) {
           <Link href="/" className="transition-colors hover:text-brand-bronze">
             Home
           </Link>
-          <Link href="/categories" className="transition-colors hover:text-brand-bronze">
+          {/* <Link href="/categories" className="transition-colors hover:text-brand-bronze">
             Categories
-          </Link>
+          </Link> */}
           <Link href="/products" className="transition-colors hover:text-brand-bronze">
             Products
           </Link>
