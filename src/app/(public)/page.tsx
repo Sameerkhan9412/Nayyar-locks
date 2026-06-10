@@ -17,9 +17,9 @@ export default async function HomePage() {
   const siteName = settings?.siteName || 'Nayyarslocks';
   const defaultWhatsapp = settings?.contact?.whatsappNumber || '9219595948';
 
-  // Fetch active categories (limit to 8)
+  // Fetch active parent categories (limit to 8)
   const categories = JSON.parse(JSON.stringify(
-    await Category.find({ isActive: true })
+    await Category.find({ isActive: true, parent: null })
       .sort({ sortOrder: 1 })
       .limit(8)
       .lean()
@@ -126,17 +126,23 @@ export default async function HomePage() {
       <section className="relative -mt-10 z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-2xl border border-gray-150 bg-white p-6 shadow-xl text-center divide-y-0 divide-x divide-gray-100">
           <div className="flex flex-col items-center p-3">
-            <span className="text-3xl sm:text-4xl font-extrabold text-brand-bronze mb-1">30+</span>
+            <span className="text-3xl sm:text-4xl font-extrabold text-brand-bronze mb-1">75+</span>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Years Experience</span>
+          </div>
+          <div className="flex flex-col items-center p-3">
+            <span className="text-3xl sm:text-4xl font-extrabold text-brand-bronze mb-1">4th</span>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              Generation Business
+            </span>
           </div>
           <div className="flex flex-col items-center p-3">
             <span className="text-3xl sm:text-4xl font-extrabold text-brand-bronze mb-1">500K+</span>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Happy Customers</span>
           </div>
-          <div className="flex flex-col items-center p-3">
+          {/* <div className="flex flex-col items-center p-3">
             <span className="text-3xl sm:text-4xl font-extrabold text-brand-bronze mb-1">100%</span>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Rust-Proof Materials</span>
-          </div>
+          </div> */}
           <div className="flex flex-col items-center p-3">
             <span className="text-3xl sm:text-4xl font-extrabold text-brand-bronze mb-1">120+</span>
             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Lock Designs</span>

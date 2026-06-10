@@ -29,6 +29,30 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Magnifier Zoom States
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
+  const [[x, y], setXY] = useState([0, 0]);
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    const elem = e.currentTarget;
+    const { width, height } = elem.getBoundingClientRect();
+    setSize([width, height]);
+    setShowMagnifier(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const elem = e.currentTarget;
+    const { top, left } = elem.getBoundingClientRect();
+    const xCoord = e.pageX - left - window.scrollX;
+    const yCoord = e.pageY - top - window.scrollY;
+    setXY([xCoord, yCoord]);
+  };
+
+  const handleMouseLeave = () => {
+    setShowMagnifier(false);
+  };
+
   const imagesList = product.images && product.images.length > 0
     ? product.images
     : ['https://images.unsplash.com/photo-1510519138101-570d1dca3d66?w=600&auto=format&fit=crop&q=80'];
@@ -89,14 +113,44 @@ export default function ProductCard({ product }: ProductCardProps) {
             </button>
 
             {/* Modal Image Gallery */}
-            <div className="relative aspect-square w-full max-w-md overflow-hidden rounded-2xl bg-gray-50 border border-gray-100">
+            <div 
+              className="relative aspect-square w-full max-w-md overflow-hidden rounded-2xl bg-gray-50 border border-gray-100 cursor-zoom-in"
+              onMouseEnter={handleMouseEnter}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+            >
               <Image
                 src={imagesList[currentImageIndex]}
                 alt={product.name}
                 fill
                 sizes="(max-width: 768px) 100vw, 600px"
-                className="object-contain"
+                className="object-contain pointer-events-none"
               />
+
+              {/* Glassy Magnifier Lens */}
+              {showMagnifier && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    pointerEvents: 'none',
+                    height: '150px',
+                    width: '150px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(255, 255, 255, 0.7)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.5)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(0.5px)',
+                    // Center the lens on the cursor
+                    top: `${y - 75}px`,
+                    left: `${x - 75}px`,
+                    // Zoomed background settings
+                    backgroundImage: `url(${imagesList[currentImageIndex]})`,
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: `${imgWidth * 2.5}px ${imgHeight * 2.5}px`,
+                    backgroundPosition: `${-(x * 2.5 - 75)}px ${-(y * 2.5 - 75)}px`,
+                  }}
+                />
+              )}
 
               {/* Navigation Arrows for multi-image products */}
               {imagesList.length > 1 && (

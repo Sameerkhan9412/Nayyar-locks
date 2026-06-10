@@ -160,7 +160,16 @@ export default function Footer({ siteName, logo, contact, socialLinks, footer, b
       <div className="border-t border-gray-800 bg-gray-950/80 py-6 text-center text-xs text-gray-500">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <span>{footer.copyright}</span>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://www.digimart360.com" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-white transition-colors"
+            >
+              Designed & Developed by Digimart 360
+            </a>
+            <span className="text-gray-800">|</span>
             <Link href="/login" className="hover:text-white transition-colors">Staff Login</Link>
           </div>
         </div>
