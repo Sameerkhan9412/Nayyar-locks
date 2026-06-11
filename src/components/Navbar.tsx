@@ -112,13 +112,13 @@ export default function Navbar({ siteName, logo, brochureUrl }: NavbarProps) {
             >
               Home
             </Link>
-            <Link
+            {/* <Link
               href="/categories"
               onClick={() => setIsOpen(false)}
               className="rounded-xl px-3 py-2 hover:bg-gray-50 transition-colors"
             >
               Categories
-            </Link>
+            </Link> */}
             <Link
               href="/products"
               onClick={() => setIsOpen(false)}
