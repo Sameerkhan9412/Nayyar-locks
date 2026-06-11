@@ -269,7 +269,12 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {bestsellerProducts.map((prod: any) => (
-                  <ProductCard key={prod._id.toString()} product={prod} defaultWhatsapp={defaultWhatsapp} />
+                  <ProductCard 
+                    key={prod._id.toString()} 
+                    product={prod} 
+                    defaultWhatsapp={defaultWhatsapp} 
+                    brochureUrl={settings?.brochureUrl}
+                  />
                 ))}
               </div>
             </div>
@@ -287,7 +292,12 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 {featuredProducts.map((prod: any) => (
-                  <ProductCard key={prod._id.toString()} product={prod} defaultWhatsapp={defaultWhatsapp} />
+                  <ProductCard 
+                    key={prod._id.toString()} 
+                    product={prod} 
+                    defaultWhatsapp={defaultWhatsapp} 
+                    brochureUrl={settings?.brochureUrl}
+                  />
                 ))}
               </div>
             </div>

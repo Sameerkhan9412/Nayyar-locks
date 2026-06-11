@@ -280,7 +280,12 @@ export default async function ProductsPage({ searchParams }: PageProps) {
             {products.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {products.map((prod: any) => (
-                  <ProductCard key={prod._id.toString()} product={prod} defaultWhatsapp={defaultWhatsapp} />
+                  <ProductCard 
+                    key={prod._id.toString()} 
+                    product={prod} 
+                    defaultWhatsapp={defaultWhatsapp} 
+                    brochureUrl={settings?.brochureUrl}
+                  />
                 ))}
               </div>
             ) : (
